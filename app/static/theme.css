@@ -1,0 +1,37 @@
+/* lineageguard · 纸白规格单：只有变量，不写布局 */
+:root {
+  --paper: #fbf8f1;
+  --paper-2: #f4eee2;
+  --paper-3: #efe6d6;
+  --surface: #fffdf8;
+  --ink: #241d15;
+  --ink-soft: #5a4d3d;
+  --ink-faint: #8b7c67;
+  --rule: #e0d5c1;
+  --rule-strong: #c3b299;
+  --accent: #8a5a2b;
+  --accent-soft: #b8874f;
+  --accent-wash: #f1e6d4;
+  --accent-ink: #fffaf1;
+  --ok: #3f6b46;
+  --warn: #a2761c;
+  --bad: #9c3b2e;
+  --info: #4a6274;
+  --font-doc: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 0;
+  --radius-sm: 0;
+  --pad: 18px;
+  --pad-sm: 10px;
+  --gap: 24px;
+  --leading: 1.75;
+  --measure: 78ch;
+  --rule-w: 1px;
+  --shadow: none;
+  --step-1: 13px;
+  --step-2: 15px;
+  --step-3: 17px;
+  --step-4: 23px;
+  --step-5: 31px;
+}
