@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}共享与审计 · lineageguard{% endblock %}
+{% block body %}
+<section class="doc-section">
+  <h1>共享与审计</h1>
+  <p class="lede">授权 <span class="mono">{{ grants|length }}</span>　共享读取 <span class="mono">{{ share_reads|length }}</span>　原件查阅 <span class="mono">{{ audit_reads|length }}</span></p>
+  <p class="lede">共享结果只含授权列与匿名下游节点；原件仅审计可看，须填用途并留痕。</p>
+</section>
+
+<section class="doc-section">
+  <h2><span class="clause">1</span>共享授权</h2>
+  {% if empty %}
+  <p class="empty">还没有批次。</p>
+  {% elif grants %}
+  <div class="wrap-scroll">
+    <table>
+      <thead>
+        <tr><th>授权</th><th>批次</th><th>标签</th><th>授权列</th><th>状态</th><th>创建</th></tr>
+      </thead>
+      <tbody>
+        {% for item in grants %}
+        <tr>
+          <td class="name">{{ item.grant_id }}</td>
+          <td class="name">{{ item.run_id }}</td>
+          <td>{{ item.label or '—' }}</td>
+          <td class="name">{% for col in item.columns %}{{ col.column }}{% if not loop.last %}、{% endif %}{% endfor %}</td>
+          <td>{% if item.status == 'active' %}<span class="st st-ok">有效</span>{% elif item.status == 'revoked' %}<span class="st st-bad">已撤销</span>{% else %}<span class="st st-warn">已过期</span>{% endif %}</td>
+          <td class="name">{{ item.created_at|day }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty">还没有共享授权。用 <code>POST /api/shares</code> 按指定列发放凭据。</p>
+  {% endif %}
+</section>
+
+<section class="doc-section">
+  <h2><span class="clause">2</span>共享读取留痕</h2>
+  {% if share_reads %}
+  <table>
+    <thead><tr><th>授权</th><th>通道</th><th>结果</th><th>时间</th><th>说明</th></tr></thead>
+    <tbody>
+      {% for item in share_reads %}
+      <tr>
+        <td class="name">{{ item.grant_id }}</td>
+        <td>{{ item.channel }}</td>
+        <td>{% if item.outcome == 'granted' %}<span class="st st-ok">放行</span>{% else %}<span class="st st-bad">拒绝</span>{% endif %}</td>
+        <td class="name">{{ item.at|ts }}</td>
+        <td class="reason">{{ item.note or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">还没有共享读取。</p>
+  {% endif %}
+</section>
+
+<section class="doc-section">
+  <h2><span class="clause">3</span>原件查阅留痕</h2>
+  {% if audit_reads %}
+  <table>
+    <thead><tr><th>批次</th><th>查阅人</th><th>用途</th><th>状态</th><th>完成</th></tr></thead>
+    <tbody>
+      {% for item in audit_reads %}
+      <tr>
+        <td class="name">{{ item.run_id }}</td>
+        <td class="name">{{ item.actor }}</td>
+        <td class="reason">{{ item.purpose }}</td>
+        <td>{% if item.status == 'complete' %}<span class="st st-ok">已留痕</span>{% elif item.status == 'interrupted' %}<span class="st st-warn">中断待补</span>{% else %}<span class="st st-warn">登记中</span>{% endif %}</td>
+        <td class="name">{{ item.completed_at|ts }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">还没有原件查阅。查阅必须填用途，失败不返回原文。</p>
+  {% endif %}
+</section>
+
+<aside class="notes">
+  <ol class="footnotes">
+    <li>凭据只在发放响应出现一次，库中只存摘要。<a class="back" href="#main">↩</a></li>
+    <li>撤销后旧凭据与下载入口同时失效，撤销与读取并发以撤销为准。<a class="back" href="#main">↩</a></li>
+  </ol>
+</aside>
+{% endblock %}

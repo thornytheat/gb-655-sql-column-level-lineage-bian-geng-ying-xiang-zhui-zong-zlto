@@ -17,6 +17,8 @@ from app.modules.m5_impact import handler as m5_handler
 from app.modules.m6_batches import handler as m6_handler
 from app.modules.m6_batches import service as batch_service
 from app.modules.m7_migration import handler as m7_handler
+from app.modules.m8_sharing import audit as audit_service
+from app.modules.m8_sharing import handler as m8_handler
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -25,6 +27,8 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 async def lifespan(_: FastAPI):
     store.init_db()
     batch_service.ensure_seeded()
+    # 中断恢复：上次进程留下的未完成查阅标成 interrupted，不计成功查阅
+    audit_service.recover_pending()
     yield
 
 
@@ -33,10 +37,42 @@ app = FastAPI(title=config.APP_TITLE, docs_url="/docs", redoc_url=None,
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 for module_handler in (m1_handler, m2_handler, m3_handler, m4_handler,
-                       m5_handler, m6_handler, m7_handler):
+                       m5_handler, m6_handler, m7_handler, m8_handler):
     app.include_router(module_handler.router)
 
 errors.install(app)
+
+# 共享凭据只放行共享读取入口，其余一律按越权拒绝。
+# 少了这一层，拿到凭据的外部协作方可以直接调 /api/impact 或导出接口拿到原文。
+SHARE_ONLY_PREFIX = "/api/shared/"
+SHARE_SAFE_PREFIXES = ("/static/",)
+
+
+@app.middleware("http")
+async def confine_share_credential(request, call_next):
+    header = request.headers.get("authorization")
+    token = (header or "").strip()
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
+    if token:
+        from app.modules.m8_sharing import gate
+
+        if gate.is_share_credential(token):
+            path = request.url.path
+            if not (path.startswith(SHARE_ONLY_PREFIX)
+                    or path.startswith(SHARE_SAFE_PREFIXES)):
+                from fastapi.responses import JSONResponse
+
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "error": "SHARE_FORBIDDEN",
+                        "label": "凭据越权访问",
+                        "message": "共享凭据只能读取脱敏影响路径",
+                        "detail": {"reason": "SHARE_FORBIDDEN", "path": path},
+                    },
+                )
+    return await call_next(request)
 
 
 @app.get("/api/health")

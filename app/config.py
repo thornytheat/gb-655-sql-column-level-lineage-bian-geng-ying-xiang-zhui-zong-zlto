@@ -95,6 +95,15 @@ WINDOW_SEMANTICS = "[start, end)"
 # 影响面最多展开层数，防止异常登记把页面拖死
 MAX_IMPACT_DEPTH = 8
 
+# 共享与审计：内部凭据留空表示本机单用户模式，接口沿用项目的“内网可信”假设
+INTERNAL_KEY = os.environ.get("LINEAGEGUARD_INTERNAL_KEY", "").strip()
+SHARE_TOKEN_BYTES = 32
+SHARE_MAX_SCOPE = 200
+SHARE_LABEL_MAX = 120
+AUDIT_PURPOSE_MAX = 500
+AUDIT_ACTOR_MAX = 120
+AUDIT_REQUEST_KEY_RE = re.compile(r"^[A-Za-z0-9_.:\-]{8,120}$")
+
 
 def resolve_sample(name: str) -> Path:
     """把样例文件名限定在 sample_data/ 内，拒绝穿越与绝对路径。"""

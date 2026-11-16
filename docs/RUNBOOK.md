@@ -55,8 +55,28 @@ docker compose up -d --build
 | GET | `/api/export/refs.csv` | 引用账 CSV |
 | GET | `/api/export/ledger.csv` | 账目 CSV |
 | GET | `/api/export/manifest.json` | 运行清单 |
+| POST | `/api/shares` | 按列发放共享凭据（内部；响应含一次性凭据） |
+| GET | `/api/shares` | 授权列表（不含凭据） |
+| GET | `/api/shares/{grant_id}` | 单个授权详情 |
+| POST | `/api/shares/{grant_id}/revoke` | 撤销授权 |
+| GET | `/api/shares/{grant_id}/reads` | 该授权的访问留痕 |
+| GET | `/api/shared/impact` | 凭据读取脱敏影响路径 |
+| GET | `/api/shared/impact.csv` | 凭据下载脱敏影响路径 CSV |
+| POST | `/api/audit/reads` | 填用途查阅原件（内部，返回原文并留痕） |
+| GET | `/api/audit/reads` | 原件查阅留痕 |
 
-## 6 失败处置
+共享读取用 `Authorization: Bearer <凭据>`；普通共享凭据访问内部接口一律 403。设了 `LINEAGEGUARD_INTERNAL_KEY` 时，内部接口还要带 `X-Internal-Key` 头。
+
+## 6 共享与审计操作
+
+1. 在 `/shares` 或 `POST /api/shares` 发放凭据：`{"columns": ["fct_pay.pay_amt"], "label": "协作方甲"}`。
+   响应里的 `credential` 只出现一次，转交后服务端无法再取回。
+2. 协作方用该凭据读 `/api/shared/impact`，只看到授权列与匿名节点；表名、列名、SQL 原文都不出现。
+3. 收回时 `POST /api/shares/{grant_id}/revoke`。旧凭据与下载入口立即失效，访问留痕可回读。
+4. 审计查原件：`POST /api/audit/reads`，必须带 `purpose` 与 `actor`；留痕失败一律不返回原文。
+   重试带同一 `request_key`（或缺省推导键）不会重复记账。
+
+## 7 失败处置
 
 | 现象 | 原因 | 处置 |
 |---|---|---|
@@ -64,7 +84,13 @@ docker compose up -d --build
 | 400 `WINDOW_INVERTED` | 生效区间起点不早于终点 | 检查 `effective_from` / `effective_to` |
 | 400 `BAD_INPUT` | 文件名、参数或 JSON 结构不对 | 看返回的 `detail` |
 | 404 `NOT_FOUND` | 还没跑过批次 | 先在 `/batches` 点「跑一次」 |
+| 401 `SHARE_CREDENTIAL_INVALID` | 没带凭据或凭据认不出 | 检查 `Authorization: Bearer` |
+| 403 `SHARE_FORBIDDEN` | 共享凭据访问内部接口，或换了批次 | 用该授权绑定的批次与对应范围的读取接口 |
+| 410 `SHARE_REVOKED` / `SHARE_EXPIRED` | 授权已撤销或过期 | 重新发放；撤销后旧凭据与下载入口一并失效 |
+| 400 `SHARE_SCOPE_EMPTY` / `SHARE_SCOPE_UNKNOWN` | 授权列为空或全部不在本批次 | 按 `表.列` 或 `{field_id}` 给出本批次存在的列 |
+| 400 `AUDIT_PURPOSE_REQUIRED` / `AUDIT_ACTOR_REQUIRED` | 查原件没填用途或查阅人 | 补齐 `purpose` 与 `actor` |
+| 500 `AUDIT_WRITE_FAILED` | 留痕写失败 | 修复存储后重试；原文不会返回，重试同一请求键不重复记账 |
 
-## 7 端口与并发
+## 8 端口与并发
 
 本服务固定 18214。同时起多个栈时改 `docker-compose.yml` 的端口映射与 `lineageguard-data` 卷名，避免与本机其他项目抢端口、串数据。

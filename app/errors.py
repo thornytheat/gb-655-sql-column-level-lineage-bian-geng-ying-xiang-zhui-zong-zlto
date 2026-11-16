@@ -14,10 +14,16 @@ class FieldmapError(Exception):
     code = "BAD_INPUT"
     label = "输入不合法"
 
-    def __init__(self, message: str, detail: dict | None = None):
+    def __init__(self, message: str, detail: dict | None = None, *,
+                 code: str | None = None, label: str | None = None):
         super().__init__(message)
         self.message = message
         self.detail = detail or {}
+        # 具体场景可以覆盖码与标签，但必须仍落在 app/reasons.py 的码表里
+        if code:
+            self.code = code
+        if label:
+            self.label = label
 
     def as_body(self) -> dict:
         return {"error": self.code, "label": self.label, "message": self.message,
@@ -46,6 +52,30 @@ class Conflict(FieldmapError):
     status = 409
     code = "CONFLICT"
     label = "记录冲突"
+
+
+class Unauthorized(FieldmapError):
+    status = 401
+    code = "UNAUTHORIZED"
+    label = "缺少凭据"
+
+
+class Forbidden(FieldmapError):
+    status = 403
+    code = "FORBIDDEN"
+    label = "无权访问"
+
+
+class Gone(FieldmapError):
+    status = 410
+    code = "GONE"
+    label = "资源已失效"
+
+
+class InternalFailure(FieldmapError):
+    status = 500
+    code = "INTERNAL"
+    label = "内部失败"
 
 
 def install(app: FastAPI) -> None:

@@ -49,6 +49,17 @@ CODES: dict[str, tuple[str, str]] = {
     "VERSION_APPLIED": ("版本已登记", "info"),
     "RUN_REUSED": ("同一输入命中已算批次", "info"),
     "WINDOW_INVERTED": ("生效区间起点不早于终点", "break"),
+    # 共享与审计
+    "SHARE_SCOPE_EMPTY": ("授权范围为空", "warn"),
+    "SHARE_SCOPE_UNKNOWN": ("授权列不在影响面内", "warn"),
+    "SHARE_REVOKED": ("共享已撤销", "break"),
+    "SHARE_EXPIRED": ("共享已过期", "break"),
+    "SHARE_CREDENTIAL_INVALID": ("共享凭据无效", "break"),
+    "SHARE_FORBIDDEN": ("凭据越权访问", "break"),
+    "AUDIT_PURPOSE_REQUIRED": ("查阅原件未填写用途", "break"),
+    "AUDIT_ACTOR_REQUIRED": ("查阅原件未标明查阅人", "break"),
+    "AUDIT_WRITE_FAILED": ("查阅留痕失败", "break"),
+    "AUDIT_TRACE_GAP": ("留痕中断待补齐", "warn"),
     # 结论
     "COMPATIBLE": ("兼容", "info"),
     "COMPATIBLE_BY_MAPPING": ("加别名后兼容", "warn"),

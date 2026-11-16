@@ -24,6 +24,7 @@ NAV = [
     {"slug": "impact", "href": "/impact", "label": "影响面"},
     {"slug": "batches", "href": "/batches", "label": "版本历史"},
     {"slug": "spec", "href": "/spec", "label": "迁移单"},
+    {"slug": "shares", "href": "/shares", "label": "共享与审计"},
 ]
 
 

@@ -7,6 +7,7 @@ services:
     environment:
       LINEAGEGUARD_DB: /data/lineageguard.sqlite
       LINEAGEGUARD_RULESET: fm-2026.11.1
+      LINEAGEGUARD_INTERNAL_KEY: ${LINEAGEGUARD_INTERNAL_KEY:-}
       TZ: UTC
     volumes:
       - lineageguard-data:/data
